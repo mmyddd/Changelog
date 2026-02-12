@@ -77,9 +77,9 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
 
             // 渲染选中状态
             if (ChangelogList.this.getSelected() == this) {
-                graphics.fill(left - 2, top - 2, left + width + 2, top + height + 2, 0x80FFFFFF);
+                graphics.fill(left - 2, top - 2, left + width -2, top + height + 2, 0x80FFFFFF);
             } else if (hovering) {
-                graphics.fill(left - 2, top - 2, left + width + 2, top + height + 2, 0x80000000);
+                graphics.fill(left - 2, top - 2, left + width -2, top + height + 2, 0x80000000);
             }
 
             int borderColor = changelogEntry.getColor();
