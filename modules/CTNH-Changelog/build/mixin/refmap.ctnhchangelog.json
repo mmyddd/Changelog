@@ -1,0 +1,15 @@
+{
+  "defaults": {
+    "modifier": [],
+    "target": {
+      "type": "value",
+      "value": "public:*
+    }
+  },
+  "packages": {
+    "io.github.cpearl0.ctnhchangelog": {
+      "mixin_target": "io.github.cpearl0.ctnhchangelog",
+      "mixin_refmap": "refmap.ctnhchangelog.json"
+    }
+  }
+}

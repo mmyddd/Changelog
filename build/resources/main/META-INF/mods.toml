@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "LGPLv3"
+issueTrackerURL = "https://github.com/CTNH-Team/CTNH-Modules/issues"
+
+[[mods]]
+modId = "ctnhchangelog"
+version = "1.0.0"
+displayName = "CTNH Changelog"
+authors = "CTNH Team"
+description = '''Changelog viewer for Create: New Horizon modpack.'''
+
+[[mixins]]
+config = "ctnhchangelog.mixins.json"
+
+[[accessTransformers]]
+file = "META-INF/accesstransformer.cfg"
+
+[[dependencies.ctnhchangelog]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ctnhchangelog]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1,1.21)"
+ordering = "NONE"
+side = "BOTH"

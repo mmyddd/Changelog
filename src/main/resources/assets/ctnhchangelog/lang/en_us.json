@@ -1,0 +1,12 @@
+{
+  "ctnhchangelog.tab.title": "Changelog",
+  "ctnhchangelog.button.changelog": "Changelog",
+  "ctnhchangelog.button.view_changelog": "View Details",
+  "ctnhchangelog.type.major": "Major Update",
+  "ctnhchangelog.type.minor": "Feature Update",
+  "ctnhchangelog.type.patch": "Patch",
+  "ctnhchangelog.type.fix": "Hotfix",
+  "ctnhchangelog.date": "Date",
+  "ctnhchangelog.version": "Version",
+  "ctnhchangelog.changes": "Changes"
+}

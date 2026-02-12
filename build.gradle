@@ -1,0 +1,106 @@
+buildscript {
+    repositories {
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
+plugins {
+    id "idea"
+    id "eclipse"
+    id "maven-publish"
+    id 'net.neoforged.moddev.legacyforge' version '2.0.91'
+    id 'com.diffplug.spotless' version '7.0.2'
+    id "io.freefair.lombok" version '8.14'
+}
+
+apply from: "./dependencies.gradle"
+apply from: "./gradle/scripts/repositories.gradle"
+
+version = mod_version
+group = maven_group
+base { archivesName = archives_base_name }
+java { sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17 }
+
+legacyForge {
+    version = project.minecraft_version + '-' + project.forge_version
+
+    parchment {
+        mappingsVersion = project.mapping_version
+        minecraftVersion = project.minecraft_version
+    }
+
+    runs {
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            jvmArgument("-DnetworkTimeout=6000000")
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+        client {
+            client()
+            sourceSet = sourceSets.main
+            systemProperty('forge.enabledGameTestNamespaces', project.mod_id)
+        }
+        server {
+            server()
+            sourceSet = sourceSets.main
+            systemProperty('forge.enabledGameTestNamespaces', project.mod_id)
+            programArguments.addAll('--nogui', '--world', 'world-extra')
+        }
+        data {
+            data()
+            sourceSet = sourceSets.main
+            programArguments.addAll('--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath())
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+jar {
+    manifest.attributes([
+            "MixinConfigs": "${mod_id}.mixins.json"
+    ])
+}
+
+mixin {
+    add sourceSets.main, "mixins.${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    var properties = [
+            "mod_license": mod_license,
+            "mod_id": mod_id,
+            "mod_version": mod_version,
+            "mod_name": mod_name,
+            "mod_url": mod_url,
+            "mod_author": mod_author,
+            "mod_description": mod_description,
+            "forge_version": forge_version.split("\\.")[0],
+            "minecraft_version": minecraft_version,
+    ]
+    inputs.properties(properties)
+
+    filesMatching("META-INF/mods.toml") {
+        expand properties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure { finalizedBy 'reobfJar' }
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release.set(17)
+    options.compilerArgs << "-Aquiet=true"
+}
+
+lombok {
+    version = "1.18.38"
+}
