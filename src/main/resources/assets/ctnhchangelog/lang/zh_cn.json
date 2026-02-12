@@ -5,8 +5,10 @@
   "ctnhchangelog.type.major": "重大更新",
   "ctnhchangelog.type.minor": "功能更新",
   "ctnhchangelog.type.patch": "修复",
-  "ctnhchangelog.type.fix": "热修复",
+  "ctnhchangelog.type.hotfix": "热修复",
+  "ctnhchangelog.type.danger": "你的存档可能损坏",
   "ctnhchangelog.date": "日期",
   "ctnhchangelog.version": "版本",
-  "ctnhchangelog.changes": "更改内容"
+  "ctnhchangelog.changes": "更改内容",
+  "ctnhchangelog.more_changes": "还有 %s 项更改..."
 }

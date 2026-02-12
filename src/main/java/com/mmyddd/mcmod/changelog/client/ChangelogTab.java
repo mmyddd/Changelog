@@ -49,7 +49,7 @@ public class ChangelogTab implements Tab {
 
         if (this.tabArea != null) {
             Font font = Minecraft.getInstance().font;
-            String footerText = "* 感谢您游玩 Create: New Horizon 整合包！查看最新更新内容。";
+            String footerText = ChangelogEntry.getFooterText();
             int footerY = this.tabArea.top() + this.tabArea.height() - 21;
             int textWidth = font.width(footerText);
             int startX = this.tabArea.left() + (this.tabArea.width() - textWidth) / 2;

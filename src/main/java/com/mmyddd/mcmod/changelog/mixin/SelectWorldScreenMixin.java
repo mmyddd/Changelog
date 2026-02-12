@@ -57,7 +57,7 @@ public abstract class SelectWorldScreenMixin extends Screen {
         int buttonHeight = searchBox.getHeight();
 
         changelogButton = Button.builder(
-                        Component.translatable("changelog.button.changelog"),
+                        Component.translatable("ctnhchangelog.button.changelog"),
                         button -> {
                             ChangelogTab.shouldOpenChangelogTab = true;
                             CreateWorldScreen.openFresh(minecraft, this);

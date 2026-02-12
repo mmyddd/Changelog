@@ -47,9 +47,7 @@ public class ChangelogScreen extends Screen {
         // 计算内容总高度
         this.contentHeight = 0;
         for (String change : entry.getChanges()) {
-            // 使用 font.width 来判断是否需要换行
             if (this.font.width(change) > this.listRight - this.listLeft - 20) {
-                // 估算换行后的行数
                 int charsPerLine = (this.listRight - this.listLeft - 20) / this.font.width("一");
                 int lines = (int) Math.ceil((double) change.length() / charsPerLine);
                 this.contentHeight += lines * 12;
@@ -72,7 +70,7 @@ public class ChangelogScreen extends Screen {
         this.renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
 
-        // 渲染版本和标题（固定不滚动）
+        // 渲染版本和标题（固定不滚动）- 使用条目自身的颜色
         String titleText = entry.getVersion() + " - " + entry.getTitle();
         graphics.drawString(this.font,
                 titleText,
@@ -98,18 +96,14 @@ public class ChangelogScreen extends Screen {
         List<String> changes = entry.getChanges();
 
         for (String change : changes) {
-            // 处理长文本换行
             List<FormattedCharSequence> lines = this.font.split(Component.literal(change), listRight - listLeft - 20);
 
             for (int i = 0; i < lines.size(); i++) {
-                // 只渲染在可视区域内的内容
                 if (y + 12 > listTop && y - 12 < listBottom) {
                     if (i == 0) {
-                        // 第一行带圆点
                         graphics.drawString(this.font, Component.literal("• ").append(Component.literal(change)).getVisualOrderText(),
                                 listLeft, y, 0xFFDDDDDD);
                     } else {
-                        // 其余行缩进
                         graphics.drawString(this.font, lines.get(i), listLeft + 10, y, 0xFFDDDDDD);
                     }
                 }
@@ -119,7 +113,7 @@ public class ChangelogScreen extends Screen {
 
         graphics.disableScissor();
 
-        // 渲染滚动条（如果内容高度超过可视区域）
+        // 渲染滚动条
         int viewHeight = this.listBottom - this.listTop;
         if (this.contentHeight > viewHeight) {
             int scrollBarHeight = (int) ((float) viewHeight * viewHeight / this.contentHeight);
@@ -127,11 +121,9 @@ public class ChangelogScreen extends Screen {
             int scrollBarY = (int) (this.scrollAmount * (viewHeight - scrollBarHeight) / maxScroll);
             scrollBarY = Mth.clamp(scrollBarY, 0, viewHeight - scrollBarHeight);
 
-            // 滚动条背景
             graphics.fill(this.listRight + 2, this.listTop,
                     this.listRight + 6, this.listBottom,
                     0x33AAAAAA);
-            // 滚动条滑块
             graphics.fill(this.listRight + 2, this.listTop + scrollBarY,
                     this.listRight + 6, this.listTop + scrollBarY + scrollBarHeight,
                     0xFFAAAAAA);
@@ -151,7 +143,6 @@ public class ChangelogScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // 检查是否点击在滚动条区域
         int viewHeight = this.listBottom - this.listTop;
         if (this.contentHeight > viewHeight) {
             if (mouseX >= this.listRight + 2 && mouseX <= this.listRight + 6 &&

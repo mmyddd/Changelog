@@ -5,8 +5,10 @@
   "ctnhchangelog.type.major": "Major Update",
   "ctnhchangelog.type.minor": "Feature Update",
   "ctnhchangelog.type.patch": "Patch",
-  "ctnhchangelog.type.fix": "Hotfix",
+  "ctnhchangelog.type.hotfix": "Hotfix",
+  "ctnhchangelog.type.danger": "Your save file may be corrupted",
   "ctnhchangelog.date": "Date",
   "ctnhchangelog.version": "Version",
-  "ctnhchangelog.changes": "Changes"
+  "ctnhchangelog.changes": "Changes",
+  "ctnhchangelog.more_changes": "and %s more changes..."
 }

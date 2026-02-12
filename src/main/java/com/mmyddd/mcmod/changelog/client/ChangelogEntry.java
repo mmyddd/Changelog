@@ -7,6 +7,8 @@ import com.google.gson.JsonParser;
 import com.mmyddd.mcmod.changelog.CTNHChangelog;
 import com.mmyddd.mcmod.changelog.Config;
 import lombok.Getter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,23 +28,28 @@ public class ChangelogEntry {
     private final String date;
     private final String title;
     private final List<String> changes;
-    private final String type;
+    private final List<String> types;
     private final int color;
     private final List<String> tags;
 
-    // ✅ 全局标签颜色映射
+    // 新增：全局 footer 文本
+    @Getter
+    private static String footerText = "Hello World!"; // 默认值
+
+    // 全局标签颜色映射
     private static final Map<String, Integer> TAG_COLORS = new HashMap<>();
+    private static boolean defaultColorsLoaded = false;
 
     private static List<ChangelogEntry> ALL_ENTRIES = new ArrayList<>();
     @Getter
     private static boolean isLoaded = false;
 
-    public ChangelogEntry(String version, String date, String title, List<String> changes, String type, int color, List<String> tags) {
+    public ChangelogEntry(String version, String date, String title, List<String> changes, List<String> types, int color, List<String> tags) {
         this.version = version;
         this.date = date;
         this.title = title;
         this.changes = changes;
-        this.type = type;
+        this.types = types != null ? types : new ArrayList<>();
         this.color = color;
         this.tags = tags != null ? tags : new ArrayList<>();
     }
@@ -63,8 +70,8 @@ public class ChangelogEntry {
         return changes;
     }
 
-    public String getType() {
-        return type;
+    public List<String> getTypes() {
+        return types;
     }
 
     public int getColor() {
@@ -80,6 +87,11 @@ public class ChangelogEntry {
     }
 
     public static int getTagColor(String tag) {
+        // 延迟加载默认颜色 - 确保Minecraft已初始化
+        if (!defaultColorsLoaded && Minecraft.getInstance() != null) {
+            loadDefaultTypeColors();
+            defaultColorsLoaded = true;
+        }
         return TAG_COLORS.getOrDefault(tag, 0xFF888888);
     }
 
@@ -157,6 +169,13 @@ public class ChangelogEntry {
         try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
 
+            // 解析 footer 文本
+            if (root.has("footer")) {
+                footerText = root.get("footer").getAsString();
+                CTNHChangelog.LOGGER.info("Loaded footer text: {}", footerText);
+            }
+
+            // 解析tagColors
             if (root.has("tagColors")) {
                 JsonObject tagColorsObj = root.getAsJsonObject("tagColors");
                 TAG_COLORS.clear();
@@ -186,7 +205,23 @@ public class ChangelogEntry {
                     }
                 }
 
-                String type = obj.has("type") ? obj.get("type").getAsString() : "update";
+                // 处理types字段，支持字符串或数组
+                List<String> types = new ArrayList<>();
+                if (obj.has("type")) {
+                    JsonElement typeElement = obj.get("type");
+                    if (typeElement.isJsonArray()) {
+                        JsonArray typeArray = typeElement.getAsJsonArray();
+                        for (JsonElement type : typeArray) {
+                            types.add(type.getAsString());
+                        }
+                    } else if (typeElement.isJsonPrimitive()) {
+                        types.add(typeElement.getAsString());
+                    }
+                } else {
+                    types.add("patch");
+                }
+
+                // 保留color字段解析
                 String colorStr = obj.has("color") ? obj.get("color").getAsString() : "#FFFFFF";
                 int color = parseColor(colorStr);
 
@@ -205,11 +240,15 @@ public class ChangelogEntry {
                     tags.add(obj.get("tag").getAsString());
                 }
 
-                entries.add(new ChangelogEntry(version, date, title, changes, type, color, tags));
+                entries.add(new ChangelogEntry(version, date, title, changes, types, color, tags));
             }
 
             ALL_ENTRIES = entries;
 
+            // 如果没有加载到任何tagColors，使用默认的原始类型名颜色
+            if (TAG_COLORS.isEmpty()) {
+                loadDefaultTypeColors();
+            }
 
             return true;
         } catch (Exception e) {
@@ -231,19 +270,39 @@ public class ChangelogEntry {
             return 0xFFFFFF;
         }
     }
+    private static void loadDefaultTypeColors() {
+        String major = Component.translatable("ctnhchangelog.type.major").getString();
+        String minor = Component.translatable("ctnhchangelog.type.minor").getString();
+        String patch = Component.translatable("ctnhchangelog.type.patch").getString();
+        String hotfix = Component.translatable("ctnhchangelog.type.hotfix").getString();
+        String danger = Component.translatable("ctnhchangelog.type.danger").getString();
+
+        TAG_COLORS.putIfAbsent(major, 0xFF5555FF);
+        TAG_COLORS.putIfAbsent(minor, 0xFF5555FF);
+        TAG_COLORS.putIfAbsent(patch, 0xFFFFFF55);
+        TAG_COLORS.putIfAbsent(hotfix, 0xFFFF5555);
+        TAG_COLORS.putIfAbsent(danger, 0xFFFF5555);
+
+        CTNHChangelog.LOGGER.info("Loaded default tag colors with translated keys");
+    }
 
     private static void loadDefaultEntries() {
         ALL_ENTRIES = new ArrayList<>();
+        loadDefaultTypeColors();
+        footerText = "Hello World!";
 
         List<String> changes1 = new ArrayList<>();
         changes1.add("这是一个示例");
+
+        List<String> types1 = new ArrayList<>();
+        types1.add("major");
 
         List<String> tags1 = new ArrayList<>();
         tags1.add("首次发布");
         tags1.add("重大更新");
 
         ALL_ENTRIES.add(new ChangelogEntry("1.0.0", LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                "首次发布", changes1, "major", 0x55FF55, tags1));
+                "首次发布", changes1, types1, 0x55FF55, tags1));
 
         CTNHChangelog.LOGGER.info("Loaded default changelog entries");
     }

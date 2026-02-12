@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
@@ -76,11 +77,12 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
             Font font = ChangelogList.this.minecraft.font;
 
             if (ChangelogList.this.getSelected() == this) {
-                graphics.fill(left - 2, top - 2, left + width -2, top + height + 2, 0x80FFFFFF);
+                graphics.fill(left - 2, top - 2, left + width - 2, top + height + 2, 0x80FFFFFF);
             } else if (hovering) {
-                graphics.fill(left - 2, top - 2, left + width -2, top + height + 2, 0x80000000);
+                graphics.fill(left - 2, top - 2, left + width - 2, top + height + 2, 0x80000000);
             }
 
+            // 使用条目自身的颜色作为边框
             int borderColor = changelogEntry.getColor();
             graphics.fill(left, top, left + 4, top + height, borderColor | 0xFF000000);
 
@@ -89,38 +91,57 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
             int line2Y = top + 18;
             int line3Y = top + 32;
 
-            String typeIcon = getTypeIcon(changelogEntry.getType());
+            // 获取第一个type作为主要版本显示
+            List<String> types = changelogEntry.getTypes();
+            String primaryType = types.isEmpty() ? "patch" : types.get(0);
+            String typeIcon = getTypeIcon(primaryType);
+
+            // 版本信息，使用条目自身的颜色
             graphics.drawString(font, typeIcon + " " + changelogEntry.getVersion(), textLeft, line1Y, changelogEntry.getColor() | 0xFF000000);
 
-            int tagStartX = textLeft + font.width(typeIcon + " " + changelogEntry.getVersion()) + 6;
-            List<String> tags = changelogEntry.getTags();
+            // === 构建完整标签列表 ===
+            List<String> allTags = new ArrayList<>();
 
-            if (!tags.isEmpty()) {
-                int currentX = tagStartX;
-                for (String tag : tags) {
-                    int tagWidth = font.width(tag) + 6;
-                    int tagHeight = 10;
-
-                    // 从全局标签颜色映射获取颜色
-                    int tagBgColor = ChangelogEntry.getTagColor(tag);
-
-                    graphics.fill(currentX, line1Y - 1, currentX + tagWidth, line1Y + tagHeight, tagBgColor);
-                    graphics.drawString(font, tag, currentX + 3, line1Y, 0xFFFFFFFF);
-
-                    currentX += tagWidth + 4;  // 标签间距
+            // 1. 先添加所有type标签（转换为翻译后的文本）
+            for (String type : types) {
+                String translatedTag = getTranslatedTypeTag(type);
+                if (translatedTag != null) {
+                    allTags.add(translatedTag);
                 }
             }
 
+            // 2. 再添加原始标签（已经是显示文本）
+            allTags.addAll(changelogEntry.getTags());
+
+            int tagStartX = textLeft + font.width(typeIcon + " " + changelogEntry.getVersion()) + 6;
+            if (!allTags.isEmpty()) {
+                int currentX = tagStartX;
+                for (String tag : allTags) {
+                    int tagWidth = font.width(tag) + 6;
+                    int tagHeight = 10;
+
+                    // 使用ChangelogEntry.getTagColor()获取标签颜色
+                    int tagBgColor = ChangelogEntry.getTagColor(tag);
+                    graphics.fill(currentX, line1Y - 1, currentX + tagWidth, line1Y + tagHeight, tagBgColor);
+                    graphics.drawString(font, tag, currentX + 3, line1Y, 0xFFFFFFFF);
+
+                    currentX += tagWidth + 4;
+                }
+            }
+
+            // 日期
             if (!changelogEntry.getDate().isEmpty()) {
-                String dateText = "日期: " + changelogEntry.getDate();
+                String dateText = Component.translatable("ctnhchangelog.date").getString() + ": " + changelogEntry.getDate();
                 int dateWidth = font.width(dateText);
                 graphics.drawString(font, dateText, left + width - dateWidth - 10, line1Y, 0xFFAAAAAA);
             }
 
+            // 标题
             if (!changelogEntry.getTitle().isEmpty()) {
                 graphics.drawString(font, changelogEntry.getTitle(), textLeft, line2Y, 0xFFDDDDDD);
             }
 
+            // 更改预览
             if (!changelogEntry.getChanges().isEmpty()) {
                 String preview = "• " + changelogEntry.getChanges().get(0);
                 if (preview.length() > 60) {
@@ -129,7 +150,7 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
                 graphics.drawString(font, preview, textLeft, line3Y, 0xFFAAAAAA);
 
                 if (changelogEntry.getChanges().size() > 1) {
-                    String moreText = "还有 " + (changelogEntry.getChanges().size() - 1) + " 项更改...";
+                    String moreText = Component.translatable("ctnhchangelog.more_changes", changelogEntry.getChanges().size() - 1).getString();
                     graphics.drawString(font, moreText, textLeft + 250, line3Y, 0xFF888888);
                 }
             }
@@ -163,17 +184,19 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
                 case "major" -> "★";
                 case "minor" -> "●";
                 case "patch" -> "○";
-                case "fix" -> "◆";
+                case "hotfix" -> "◆";
                 default -> "•";
             };
         }
 
-        private String getTypeTag(String type) {
+        // 将原始类型名转换为翻译后的文本
+        private String getTranslatedTypeTag(String type) {
             return switch (type) {
-                case "major" -> "重大更新";
-                case "minor" -> "功能更新";
-                case "patch" -> "修复";
-                case "fix" -> "热修复";
+                case "major" -> Component.translatable("ctnhchangelog.type.major").getString();
+                case "minor" -> Component.translatable("ctnhchangelog.type.minor").getString();
+                case "patch" -> Component.translatable("ctnhchangelog.type.patch").getString();
+                case "hotfix" -> Component.translatable("ctnhchangelog.type.hotfix").getString();
+                case "danger" -> Component.translatable("ctnhchangelog.type.danger").getString();
                 default -> null;
             };
         }
