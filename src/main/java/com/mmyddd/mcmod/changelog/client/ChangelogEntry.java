@@ -32,11 +32,9 @@ public class ChangelogEntry {
     private final int color;
     private final List<String> tags;
 
-    // 新增：全局 footer 文本
     @Getter
     private static String footerText = "Hello World!"; // 默认值
 
-    // 全局标签颜色映射
     private static final Map<String, Integer> TAG_COLORS = new HashMap<>();
     private static boolean defaultColorsLoaded = false;
 
@@ -87,7 +85,6 @@ public class ChangelogEntry {
     }
 
     public static int getTagColor(String tag) {
-        // 延迟加载默认颜色 - 确保Minecraft已初始化
         if (!defaultColorsLoaded && Minecraft.getInstance() != null) {
             loadDefaultTypeColors();
             defaultColorsLoaded = true;
@@ -169,13 +166,11 @@ public class ChangelogEntry {
         try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
 
-            // 解析 footer 文本
             if (root.has("footer")) {
                 footerText = root.get("footer").getAsString();
                 CTNHChangelog.LOGGER.info("Loaded footer text: {}", footerText);
             }
 
-            // 解析tagColors
             if (root.has("tagColors")) {
                 JsonObject tagColorsObj = root.getAsJsonObject("tagColors");
                 TAG_COLORS.clear();
@@ -205,7 +200,6 @@ public class ChangelogEntry {
                     }
                 }
 
-                // 处理types字段，支持字符串或数组
                 List<String> types = new ArrayList<>();
                 if (obj.has("type")) {
                     JsonElement typeElement = obj.get("type");
@@ -245,7 +239,6 @@ public class ChangelogEntry {
 
             ALL_ENTRIES = entries;
 
-            // 如果没有加载到任何tagColors，使用默认的原始类型名颜色
             if (TAG_COLORS.isEmpty()) {
                 loadDefaultTypeColors();
             }

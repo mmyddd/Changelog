@@ -38,13 +38,11 @@ public class ChangelogScreen extends Screen {
     protected void init() {
         super.init();
 
-        // 定义内容区域
         this.listLeft = 30;
         this.listRight = this.width - 30;
         this.listTop = 70;
         this.listBottom = this.height - 50;
 
-        // 计算内容总高度
         this.contentHeight = 0;
         for (String change : entry.getChanges()) {
             if (this.font.width(change) > this.listRight - this.listLeft - 20) {
@@ -56,7 +54,6 @@ public class ChangelogScreen extends Screen {
             }
         }
 
-        // 返回按钮
         this.addRenderableWidget(
                 Button.builder(Component.literal("返回"),
                                 button -> this.onClose())
@@ -70,7 +67,6 @@ public class ChangelogScreen extends Screen {
         this.renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
 
-        // 渲染版本和标题（固定不滚动）- 使用条目自身的颜色
         String titleText = entry.getVersion() + " - " + entry.getTitle();
         graphics.drawString(this.font,
                 titleText,
@@ -78,7 +74,6 @@ public class ChangelogScreen extends Screen {
                 20,
                 entry.getColor() | 0xFF000000);
 
-        // 渲染日期（固定不滚动）
         if (!entry.getDate().isEmpty()) {
             String dateText = "日期: " + entry.getDate();
             graphics.drawString(this.font,
@@ -88,10 +83,8 @@ public class ChangelogScreen extends Screen {
                     0xFFAAAAAA);
         }
 
-        // 创建剪刀区域（启用滚动裁剪）
         graphics.enableScissor(listLeft - 5, listTop, listRight + 5, listBottom);
 
-        // 渲染可滚动的内容
         int y = listTop - (int) this.scrollAmount;
         List<String> changes = entry.getChanges();
 
@@ -113,7 +106,6 @@ public class ChangelogScreen extends Screen {
 
         graphics.disableScissor();
 
-        // 渲染滚动条
         int viewHeight = this.listBottom - this.listTop;
         if (this.contentHeight > viewHeight) {
             int scrollBarHeight = (int) ((float) viewHeight * viewHeight / this.contentHeight);
