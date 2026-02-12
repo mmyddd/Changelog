@@ -10,12 +10,10 @@ public class ChangelogScreen extends Screen {
     private final ChangelogEntry entry;
     private final CreateWorldScreen parentScreen;  // 保存父屏幕
 
-    // ✅ 原有的构造函数（保留向后兼容）
     public ChangelogScreen(ChangelogEntry entry) {
         this(entry, null);
     }
 
-    // ✅ 新增的构造函数，接收父屏幕
     public ChangelogScreen(ChangelogEntry entry, CreateWorldScreen parentScreen) {
         super(Component.literal(entry.getVersion() + " - " + entry.getTitle()));
         this.entry = entry;
@@ -66,13 +64,16 @@ public class ChangelogScreen extends Screen {
 
     @Override
     public void onClose() {
-        // ✅ 优先返回到保存的父屏幕
         if (this.minecraft != null) {
             if (this.parentScreen != null) {
+                // ✅ 优先返回到保存的父屏幕
                 this.minecraft.setScreen(this.parentScreen);
             } else {
-                // 如果没有父屏幕，尝试返回上一个屏幕
-                this.minecraft.setScreen(this.minecraft.screen);
+                // ✅ 1.20.1 兼容：直接返回上一个屏幕
+                // 如果当前屏幕是 ChangelogScreen，直接关闭返回上一个
+                if (this.minecraft.screen == this) {
+                    this.minecraft.setScreen(null);
+                }
             }
         }
     }

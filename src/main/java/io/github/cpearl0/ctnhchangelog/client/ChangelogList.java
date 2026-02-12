@@ -55,7 +55,10 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
     private void openDetailScreen(Entry entry) {
         Screen currentScreen = Minecraft.getInstance().screen;
         if (currentScreen instanceof CreateWorldScreen) {
-            this.detailScreen = new ChangelogScreen(entry.getEntry(), (CreateWorldScreen) currentScreen);
+            this.detailScreen = new ChangelogScreen(
+                    entry.getEntry(),
+                    (CreateWorldScreen) currentScreen
+            );
             Minecraft.getInstance().setScreen(detailScreen);
         }
     }

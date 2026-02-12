@@ -77,9 +77,8 @@ public class ChangelogEntry {
         return tags.contains(tag);
     }
 
-    // ✅ 获取标签颜色（静态方法）
     public static int getTagColor(String tag) {
-        return TAG_COLORS.getOrDefault(tag, 0xFF888888); // 默认灰色
+        return TAG_COLORS.getOrDefault(tag, 0xFF888888);
     }
 
     public static List<ChangelogEntry> getAllEntries() {
@@ -160,7 +159,6 @@ public class ChangelogEntry {
         try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
 
-            // ✅ 加载标签颜色配置
             if (root.has("tagColors")) {
                 JsonObject tagColorsObj = root.getAsJsonObject("tagColors");
                 TAG_COLORS.clear();
@@ -173,7 +171,6 @@ public class ChangelogEntry {
                 }
             }
 
-            // 加载更新日志条目
             JsonArray entriesArray = root.getAsJsonArray("entries");
             List<ChangelogEntry> entries = new ArrayList<>();
 
@@ -215,10 +212,6 @@ public class ChangelogEntry {
 
             ALL_ENTRIES = entries;
 
-            // ✅ 如果没有定义任何标签颜色，使用默认配置
-            if (TAG_COLORS.isEmpty()) {
-                loadDefaultTagColors();
-            }
 
             return true;
         } catch (Exception e) {
@@ -241,29 +234,11 @@ public class ChangelogEntry {
         }
     }
 
-    // ✅ 默认标签颜色（仅当JSON中没有定义时使用）
-    private static void loadDefaultTagColors() {
-        TAG_COLORS.put("热销", 0xFF55FF55);
-        TAG_COLORS.put("推荐", 0xFF55FF55);
-        TAG_COLORS.put("重大更新", 0xFF5555FF);
-        TAG_COLORS.put("新版", 0xFF5555FF);
-        TAG_COLORS.put("修复", 0xFFFFFF55);
-        TAG_COLORS.put("补丁", 0xFFFFFF55);
-        TAG_COLORS.put("紧急修复", 0xFFFF5555);
-        TAG_COLORS.put("热修复", 0xFFFF5555);
-        TAG_COLORS.put("开发组招新", 0xFFFFAA00);
-        TAG_COLORS.put("存档迁移", 0xFFFF55FF);
-        CTNHChangelog.LOGGER.info("Loaded default tag colors");
-    }
-
     private static void loadDefaultEntries() {
         ALL_ENTRIES = new ArrayList<>();
-        loadDefaultTagColors();
 
         List<String> changes1 = new ArrayList<>();
-        changes1.add("新增更新日志查看功能");
-        changes1.add("优化界面显示效果");
-        changes1.add("修复已知问题");
+        changes1.add("这是一个示例");
 
         List<String> tags1 = new ArrayList<>();
         tags1.add("首次发布");

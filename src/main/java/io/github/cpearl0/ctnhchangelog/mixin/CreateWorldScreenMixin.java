@@ -23,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.lang.reflect.Field;
 import java.util.Collections;
 
 @Mixin(CreateWorldScreen.class)
@@ -42,6 +43,9 @@ public abstract class CreateWorldScreenMixin extends Screen {
 
     @Unique
     private Button.OnPress ctnhchangelog$originalPressCommand = null;
+
+    @Unique
+    private Button ctnhchangelog$currentButton = null;
 
     protected CreateWorldScreenMixin(Component title) {
         super(title);
@@ -103,9 +107,8 @@ public abstract class CreateWorldScreenMixin extends Screen {
                     this.ctnhchangelog$originalCreateButtonText = createButton.getMessage();
                 }
                 if (this.ctnhchangelog$originalPressCommand == null) {
-                    // ✅ 通过反射保存原来的点击事件
                     try {
-                        java.lang.reflect.Field pressField = Button.class.getDeclaredField("onPress");
+                        Field pressField = Button.class.getDeclaredField("onPress");
                         pressField.setAccessible(true);
                         this.ctnhchangelog$originalPressCommand = (Button.OnPress) pressField.get(createButton);
                     } catch (Exception e) {
@@ -113,28 +116,33 @@ public abstract class CreateWorldScreenMixin extends Screen {
                     }
                 }
 
-                createButton.setMessage(VIEW_CHANGELOG_TEXT);
+                // 如果当前按钮不是我们创建的新按钮，或者文本不是查看详情，才进行替换
+                if (this.ctnhchangelog$currentButton != createButton ||
+                        !createButton.getMessage().getString().equals(VIEW_CHANGELOG_TEXT.getString())) {
 
-                // ✅ 使用新的按钮构建器方式设置点击事件
-                Button newButton = Button.builder(VIEW_CHANGELOG_TEXT, button -> {
-                    // 获取当前选中的更新日志条目
-                    ChangelogTab changelogTab = (ChangelogTab) currentTab;
-                    ChangelogList list = changelogTab.getChangelogList();
-                    ChangelogList.Entry selected = list.getSelected();
-                    if (selected != null) {
-                        // 打开详情界面
-                        Minecraft.getInstance().setScreen(new ChangelogScreen(selected.getEntry()));
-                    }
-                }).bounds(createButton.getX(), createButton.getY(), createButton.getWidth(), createButton.getHeight()).build();
+                    Button newButton = Button.builder(VIEW_CHANGELOG_TEXT, button -> {
+                        ChangelogTab changelogTab = (ChangelogTab) currentTab;
+                        ChangelogList list = changelogTab.getChangelogList();
+                        ChangelogList.Entry selected = list.getSelected();
+                        if (selected != null) {
+                            Minecraft.getInstance().setScreen(
+                                    new ChangelogScreen(
+                                            selected.getEntry(),
+                                            (CreateWorldScreen) (Object) CreateWorldScreenMixin.this
+                                    )
+                            );
+                        }
+                    }).bounds(createButton.getX(), createButton.getY(), createButton.getWidth(), createButton.getHeight()).build();
 
-                // 替换按钮
-                this.removeWidget(createButton);
-                this.addRenderableWidget(newButton);
-
+                    this.removeWidget(createButton);
+                    this.addRenderableWidget(newButton);
+                    this.ctnhchangelog$currentButton = newButton;
+                }
             } else {
                 // 切出时恢复原样
                 if (this.ctnhchangelog$originalCreateButtonText != null &&
-                        this.ctnhchangelog$originalPressCommand != null) {
+                        this.ctnhchangelog$originalPressCommand != null &&
+                        this.ctnhchangelog$currentButton != null) {
 
                     Button originalButton = Button.builder(this.ctnhchangelog$originalCreateButtonText,
                                     this.ctnhchangelog$originalPressCommand)
@@ -143,6 +151,7 @@ public abstract class CreateWorldScreenMixin extends Screen {
 
                     this.removeWidget(createButton);
                     this.addRenderableWidget(originalButton);
+                    this.ctnhchangelog$currentButton = originalButton;
                 }
             }
         }
@@ -160,7 +169,6 @@ public abstract class CreateWorldScreenMixin extends Screen {
         if (currentTab instanceof ChangelogTab changelogTab) {
             ChangelogList list = changelogTab.getChangelogList();
             if (list != null) {
-                // 只转发给列表处理，不处理按钮
                 if (list.mouseClicked(mouseX, mouseY, button)) {
                     return true;
                 }
