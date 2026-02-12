@@ -1,7 +1,0 @@
-#更新日志JSON文件的远程URL
-changelogUrl = ""
-#是否在创建世界界面显示更新日志标签页
-enableChangelogTab = true
-#是否在加入服务器/世界时显示更新日志提示
-showOnJoin = true
-
