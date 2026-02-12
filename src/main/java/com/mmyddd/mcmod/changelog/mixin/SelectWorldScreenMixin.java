@@ -1,7 +1,9 @@
 package com.mmyddd.mcmod.changelog.mixin;
 
 import com.mmyddd.mcmod.changelog.Config;
+import com.mmyddd.mcmod.changelog.client.ChangelogOverviewScreen;
 import com.mmyddd.mcmod.changelog.client.ChangelogTab;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -59,8 +61,12 @@ public abstract class SelectWorldScreenMixin extends Screen {
         changelogButton = Button.builder(
                         Component.translatable("ctnhchangelog.button.changelog"),
                         button -> {
-                            ChangelogTab.shouldOpenChangelogTab = true;
-                            CreateWorldScreen.openFresh(minecraft, this);
+                            // 直接打开独立的更新日志界面，不依赖 CreateWorldScreen
+                            Minecraft.getInstance().setScreen(
+                                    new ChangelogOverviewScreen(
+                                            (SelectWorldScreen) (Object) this
+                                    )
+                            );
                         })
                 .bounds(buttonX, buttonY, buttonWidth, buttonHeight)
                 .build();
