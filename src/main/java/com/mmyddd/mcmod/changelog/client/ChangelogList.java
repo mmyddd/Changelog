@@ -68,14 +68,12 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
         public void render(GuiGraphics graphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovering, float partialTick) {
             Font font = ChangelogList.this.minecraft.font;
 
-            // 选中/悬停效果
             if (ChangelogList.this.getSelected() == this) {
                 graphics.fill(left - 2, top - 2, left + width - 2, top + height + 2, 0x80FFFFFF);
             } else if (hovering) {
                 graphics.fill(left - 2, top - 2, left + width - 2, top + height + 2, 0x80000000);
             }
 
-            // 左侧边框
             int borderColor = changelogEntry.getColor();
             graphics.fill(left, top, left + 4, top + height, borderColor | 0xFF000000);
 
@@ -84,13 +82,11 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
             int line2Y = top + 18;
             int line3Y = top + 32;
 
-            // 版本号 + 图标
             List<String> types = changelogEntry.getTypes();
             String primaryType = types.isEmpty() ? "patch" : types.get(0);
             String typeIcon = getTypeIcon(primaryType);
             graphics.drawString(font, typeIcon + " " + changelogEntry.getVersion(), textLeft, line1Y, changelogEntry.getColor() | 0xFF000000);
 
-            // 标签
             List<String> allTags = new ArrayList<>();
             for (String type : types) {
                 String translatedTag = getTranslatedTypeTag(type);
@@ -113,19 +109,16 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
                 }
             }
 
-            // 日期
             if (!changelogEntry.getDate().isEmpty()) {
                 String dateText = Component.translatable("ctnhchangelog.date").getString() + ": " + changelogEntry.getDate();
                 int dateWidth = font.width(dateText);
                 graphics.drawString(font, dateText, left + width - dateWidth - 10, line1Y, 0xFFAAAAAA);
             }
 
-            // 标题
             if (!changelogEntry.getTitle().isEmpty()) {
                 graphics.drawString(font, changelogEntry.getTitle(), textLeft, line2Y, 0xFFDDDDDD);
             }
 
-            // 预览内容
             if (!changelogEntry.getChanges().isEmpty()) {
                 String preview = "• " + changelogEntry.getChanges().get(0);
                 if (preview.length() > 60) {
@@ -133,14 +126,12 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
                 }
                 graphics.drawString(font, preview, textLeft, line3Y, 0xFFAAAAAA);
 
-                // 更多数量提示
                 if (changelogEntry.getChanges().size() > 1) {
                     String moreText = Component.translatable("ctnhchangelog.more_changes", changelogEntry.getChanges().size() - 1).getString();
                     graphics.drawString(font, moreText, textLeft + 250, line3Y, 0xFF888888);
                 }
             }
 
-            // ========== 双击查看详情提示 ==========
             String hintText = "(" + Component.translatable("ctnhchangelog.button.view_changelog").getString() + ")";
             graphics.drawString(font, hintText, left + width - font.width(hintText) - 10, line3Y, 0xFF888888);
         }

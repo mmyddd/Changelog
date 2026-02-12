@@ -99,33 +99,46 @@ public class ChangelogEntry {
     public static void loadAsync() {
         CompletableFuture.runAsync(() -> {
             int attempts = 0;
-            while (Config.getChangelogUrl() == null || Config.getChangelogUrl().isEmpty()) {
-                try {
-                    if (attempts++ > 50) {
-                        CTNHChangelog.LOGGER.warn("Timeout waiting for config, using local resources");
-                        loadFromResources();
-                        isLoaded = true;
-                        return;
-                    }
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+            String remoteUrl;
+
+            CTNHChangelog.LOGGER.info("Waiting for config to load...");
+
+            while (true) {
+                remoteUrl = Config.getChangelogUrl();
+                if (remoteUrl != null && !remoteUrl.isEmpty()) {
+                    CTNHChangelog.LOGGER.info("Config loaded, URL: {}", remoteUrl);
                     break;
                 }
-            }
 
-            String remoteUrl = Config.getChangelogUrl();
-            CTNHChangelog.LOGGER.info("Attempting to load changelog from remote URL: {}", remoteUrl);
-
-            if (remoteUrl != null && !remoteUrl.isEmpty()) {
-                if (loadFromRemote(remoteUrl)) {
-                    CTNHChangelog.LOGGER.info("Loaded {} changelog entries from remote", ALL_ENTRIES.size());
-                    CTNHChangelog.LOGGER.info("Loaded {} tag colors from remote", TAG_COLORS.size());
+                attempts++;
+                if (attempts > 200) {
+                    CTNHChangelog.LOGGER.warn("Timeout waiting for config after 20 seconds, using local resources");
+                    loadFromResources();
                     isLoaded = true;
                     return;
                 }
-                CTNHChangelog.LOGGER.warn("Failed to load from remote, falling back to local resources");
+
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    CTNHChangelog.LOGGER.warn("Interrupted while waiting for config, using local resources");
+                    loadFromResources();
+                    isLoaded = true;
+                    return;
+                }
             }
+
+            CTNHChangelog.LOGGER.info("Attempting to load changelog from remote URL: {}", remoteUrl);
+
+            if (loadFromRemote(remoteUrl)) {
+                CTNHChangelog.LOGGER.info("Loaded {} changelog entries from remote", ALL_ENTRIES.size());
+                CTNHChangelog.LOGGER.info("Loaded {} tag colors from remote", TAG_COLORS.size());
+                isLoaded = true;
+                return;
+            }
+
+            CTNHChangelog.LOGGER.warn("Failed to load from remote, falling back to local resources");
             loadFromResources();
             isLoaded = true;
         });

@@ -24,13 +24,11 @@ public class ChangelogOverviewScreen extends Screen {
     protected void init() {
         super.init();
 
-        // 计算列表区域
         this.listLeft = 20;
         this.listRight = this.width - 20;
         this.listTop = 40;
         this.listBottom = this.height - 60;
 
-        // 创建更新日志列表
         this.changelogList = new ChangelogList(
                 this.minecraft,
                 this.width - 40,
@@ -41,7 +39,6 @@ public class ChangelogOverviewScreen extends Screen {
         );
         this.addRenderableWidget(changelogList);
 
-        // 添加返回按钮
         this.addRenderableWidget(
                 Button.builder(
                                 Component.translatable("gui.back"),
@@ -69,7 +66,6 @@ public class ChangelogOverviewScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
 
-        // 渲染标题
         String title = this.title.getString();
         graphics.drawString(
                 this.font,
@@ -79,7 +75,6 @@ public class ChangelogOverviewScreen extends Screen {
                 0xFFFFFF
         );
 
-        // 渲染统计信息
         List<ChangelogEntry> entries = ChangelogEntry.getAllEntries();
         String stats = Component.translatable(
                 "ctnhchangelog.stats",
@@ -93,14 +88,12 @@ public class ChangelogOverviewScreen extends Screen {
                 0xAAAAAA
         );
 
-        // 渲染页脚（渐变文本）
         String footer = ChangelogEntry.getFooterText();
         if (footer != null && !footer.isEmpty()) {
             int footerY = this.height - 50;
             int textWidth = this.font.width(footer);
             int startX = this.width / 2 - textWidth / 2;
 
-            // 渐变渲染（如果需要）
             graphics.drawString(
                     this.font,
                     footer,

@@ -63,7 +63,6 @@ public class ChangelogDetailScreen extends Screen {
         this.renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
 
-        // 标题
         String titleText = entry.getVersion() + " - " + entry.getTitle();
         graphics.drawString(this.font,
                 titleText,
@@ -72,7 +71,6 @@ public class ChangelogDetailScreen extends Screen {
                 entry.getColor() | 0xFF000000
         );
 
-        // 日期
         if (!entry.getDate().isEmpty()) {
             String dateText = Component.translatable("ctnhchangelog.date").getString() + ": " + entry.getDate();
             graphics.drawString(this.font,
@@ -83,7 +81,6 @@ public class ChangelogDetailScreen extends Screen {
             );
         }
 
-        // 滚动区域
         graphics.enableScissor(listLeft - 5, listTop, listRight + 5, listBottom);
 
         int y = listTop - (int) this.scrollAmount;
@@ -105,7 +102,6 @@ public class ChangelogDetailScreen extends Screen {
 
         graphics.disableScissor();
 
-        // 滚动条
         int viewHeight = this.listBottom - this.listTop;
         if (this.contentHeight > viewHeight) {
             int scrollBarHeight = (int) ((float) viewHeight * viewHeight / this.contentHeight);
