@@ -92,18 +92,39 @@ public class ChangelogOverviewScreen extends Screen {
         if (footer != null && !footer.isEmpty()) {
             int footerY = this.height - 50;
             int textWidth = this.font.width(footer);
-            int startX = this.width / 2 - textWidth / 2;
+            int startX = (this.width - textWidth) / 2;
+            int charX = startX;
 
-            graphics.drawString(
-                    this.font,
-                    footer,
-                    startX,
-                    footerY,
-                    0x55FF55
-            );
+            for (int i = 0; i < footer.length(); i++) {
+                String ch = String.valueOf(footer.charAt(i));
+                float progress = (float) i / (float) (footer.length() - 1);
+                int color = getGradientColor(progress);
+                graphics.drawString(this.font, ch, charX, footerY, color);
+                charX += this.font.width(ch);
+            }
         }
 
         super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private int getGradientColor(float progress) {
+        int startR = 85, startG = 255, startB = 85;
+        int midR = 0, midG = 255, midB = 136;
+        int endR = 0, endG = 170, endB = 204;
+
+        int r, g, b;
+        if (progress < 0.5F) {
+            float t = progress * 2.0F;
+            r = (int) (startR + (midR - startR) * t);
+            g = (int) (startG + (midG - startG) * t);
+            b = (int) (startB + (midB - startB) * t);
+        } else {
+            float t = (progress - 0.5F) * 2.0F;
+            r = (int) (midR + (endR - midR) * t);
+            g = (int) (midG + (endG - midG) * t);
+            b = (int) (midB + (endB - midB) * t);
+        }
+        return 0xFF000000 | r << 16 | g << 8 | b;
     }
 
     @Override
