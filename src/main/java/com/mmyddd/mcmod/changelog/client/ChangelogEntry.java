@@ -7,8 +7,6 @@ import com.google.gson.JsonParser;
 import com.mmyddd.mcmod.changelog.CTNHChangelog;
 import com.mmyddd.mcmod.changelog.Config;
 import lombok.Getter;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,10 +31,9 @@ public class ChangelogEntry {
     private final List<String> tags;
 
     @Getter
-    private static String footerText = "Hello World!"; // 默认值
+    private static String footerText = "Hello World!";
 
     private static final Map<String, Integer> TAG_COLORS = new HashMap<>();
-    private static boolean defaultColorsLoaded = false;
 
     private static List<ChangelogEntry> ALL_ENTRIES = new ArrayList<>();
     @Getter
@@ -85,10 +82,6 @@ public class ChangelogEntry {
     }
 
     public static int getTagColor(String tag) {
-        if (!defaultColorsLoaded && Minecraft.getInstance() != null) {
-            loadDefaultTypeColors();
-            defaultColorsLoaded = true;
-        }
         return TAG_COLORS.getOrDefault(tag, 0xFF888888);
     }
 
@@ -223,6 +216,9 @@ public class ChangelogEntry {
                     TAG_COLORS.put(tag, color);
                     CTNHChangelog.LOGGER.debug("Loaded tag color: {} = {}", tag, colorStr);
                 }
+            } else {
+                CTNHChangelog.LOGGER.info("No tagColors defined in JSON");
+                TAG_COLORS.clear();
             }
 
             JsonArray entriesArray = root.getAsJsonArray("entries");
@@ -279,11 +275,6 @@ public class ChangelogEntry {
             }
 
             ALL_ENTRIES = entries;
-
-            if (TAG_COLORS.isEmpty()) {
-                loadDefaultTypeColors();
-            }
-
             return true;
         } catch (Exception e) {
             CTNHChangelog.LOGGER.error("Failed to parse changelog JSON", e);
@@ -294,35 +285,27 @@ public class ChangelogEntry {
     private static int parseColor(String colorStr) {
         try {
             if (colorStr.startsWith("0x") || colorStr.startsWith("0X")) {
-                return (int) Long.parseLong(colorStr.substring(2), 16);
+                String hex = colorStr.substring(2);
+                if (hex.length() == 6) {
+                    return (int) Long.parseLong("FF" + hex, 16);
+                } else if (hex.length() == 8) {
+                    return (int) Long.parseLong(hex, 16);
+                }
             } else if (colorStr.startsWith("#")) {
                 return (int) Long.parseLong("FF" + colorStr.substring(1), 16);
             } else {
                 return Integer.parseInt(colorStr);
             }
         } catch (Exception e) {
-            return 0xFFFFFF;
+            CTNHChangelog.LOGGER.warn("Failed to parse color: {}, using default white", colorStr);
+            return 0xFFFFFFFF;
         }
-    }
-    private static void loadDefaultTypeColors() {
-        String major = Component.translatable("ctnhchangelog.type.major").getString();
-        String minor = Component.translatable("ctnhchangelog.type.minor").getString();
-        String patch = Component.translatable("ctnhchangelog.type.patch").getString();
-        String hotfix = Component.translatable("ctnhchangelog.type.hotfix").getString();
-        String danger = Component.translatable("ctnhchangelog.type.danger").getString();
-
-        TAG_COLORS.putIfAbsent(major, 0xFF5555FF);
-        TAG_COLORS.putIfAbsent(minor, 0xFF5555FF);
-        TAG_COLORS.putIfAbsent(patch, 0xFFFFFF55);
-        TAG_COLORS.putIfAbsent(hotfix, 0xFFFF5555);
-        TAG_COLORS.putIfAbsent(danger, 0xFFFF5555);
-
-        CTNHChangelog.LOGGER.info("Loaded default tag colors with translated keys");
+        return 0xFFFFFFFF;
     }
 
     private static void loadDefaultEntries() {
         ALL_ENTRIES = new ArrayList<>();
-        loadDefaultTypeColors();
+        TAG_COLORS.clear();
         footerText = "Hello World!";
 
         List<String> changes1 = new ArrayList<>();
@@ -336,7 +319,7 @@ public class ChangelogEntry {
         tags1.add("重大更新");
 
         ALL_ENTRIES.add(new ChangelogEntry("1.0.0", LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                "首次发布", changes1, types1, 0x55FF55, tags1));
+                "首次发布", changes1, types1, 0xFF55FF55, tags1));
 
         CTNHChangelog.LOGGER.info("Loaded default changelog entries");
     }

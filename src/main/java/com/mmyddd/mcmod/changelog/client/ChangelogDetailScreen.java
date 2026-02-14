@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChangelogDetailScreen extends Screen {
@@ -34,10 +35,9 @@ public class ChangelogDetailScreen extends Screen {
 
         this.listLeft = 30;
         this.listRight = this.width - 30;
-        this.listTop = 70;
+        this.listTop = 100;
         this.listBottom = this.height - 50;
 
-        // 计算内容高度
         this.contentHeight = 0;
         for (String change : entry.getChanges()) {
             List<FormattedCharSequence> lines = this.font.split(
@@ -47,7 +47,6 @@ public class ChangelogDetailScreen extends Screen {
             this.contentHeight += lines.size() * 12;
         }
 
-        // 返回按钮
         this.addRenderableWidget(
                 Button.builder(
                                 Component.translatable("gui.back"),
@@ -76,10 +75,12 @@ public class ChangelogDetailScreen extends Screen {
             graphics.drawString(this.font,
                     dateText,
                     this.width / 2 - this.font.width(dateText) / 2,
-                    40,
+                    35,
                     0xFFAAAAAA
             );
         }
+
+        renderTags(graphics, 45);
 
         graphics.enableScissor(listLeft - 5, listTop, listRight + 5, listBottom);
 
@@ -116,6 +117,73 @@ public class ChangelogDetailScreen extends Screen {
                     this.listRight + 6, this.listTop + scrollBarY + scrollBarHeight,
                     0xFFAAAAAA);
         }
+    }
+
+    private void renderTags(GuiGraphics graphics, int y) {
+        List<DisplayTag> allTags = new ArrayList<>();
+
+        for (String type : entry.getTypes()) {
+            String translatedType = getTranslatedTypeTag(type);
+            if (translatedType != null) {
+                int color = getTypeColor(type);
+                allTags.add(new DisplayTag(translatedType, color));
+            }
+        }
+
+        for (String tag : entry.getTags()) {
+            int color = ChangelogEntry.getTagColor(tag);
+            allTags.add(new DisplayTag(tag, color));
+        }
+
+        if (allTags.isEmpty()) return;
+
+        int startX = (this.width - calculateTotalWidth(allTags)) / 2;
+        int currentX = startX;
+
+        for (DisplayTag tag : allTags) {
+            int tagWidth = this.font.width(tag.text) + 6;
+            int tagHeight = 10;
+
+            // 渲染标签背景
+            graphics.fill(currentX, y - 1, currentX + tagWidth, y + tagHeight, tag.color);
+            // 渲染标签文字
+            graphics.drawString(this.font, tag.text, currentX + 3, y, 0xFFFFFFFF);
+
+            currentX += tagWidth + 4;
+        }
+    }
+
+    private int calculateTotalWidth(List<DisplayTag> tags) {
+        int total = 0;
+        for (int i = 0; i < tags.size(); i++) {
+            DisplayTag tag = tags.get(i);
+            total += this.font.width(tag.text) + 6;
+            if (i < tags.size() - 1) {
+                total += 4; // 间距
+            }
+        }
+        return total;
+    }
+    private int getTypeColor(String type) {
+        return switch (type) {
+            case "major" -> 0xFF5555FF;  // 蓝色
+            case "minor" -> 0xFF55FF55;  // 绿色
+            case "patch" -> 0xFFFFFF55;  // 黄色
+            case "hotfix" -> 0xFFFF5555; // 红色
+            case "danger" -> 0xFFFF5555; // 红色
+            default -> 0xFF888888;       // 灰色
+        };
+    }
+
+    private String getTranslatedTypeTag(String type) {
+        return switch (type) {
+            case "major" -> Component.translatable("ctnhchangelog.type.major").getString();
+            case "minor" -> Component.translatable("ctnhchangelog.type.minor").getString();
+            case "patch" -> Component.translatable("ctnhchangelog.type.patch").getString();
+            case "hotfix" -> Component.translatable("ctnhchangelog.type.hotfix").getString();
+            case "danger" -> Component.translatable("ctnhchangelog.type.danger").getString();
+            default -> null;
+        };
     }
 
     @Override
@@ -173,5 +241,15 @@ public class ChangelogDetailScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    private static class DisplayTag {
+        final String text;
+        final int color;
+
+        DisplayTag(String text, int color) {
+            this.text = text;
+            this.color = color;
+        }
     }
 }

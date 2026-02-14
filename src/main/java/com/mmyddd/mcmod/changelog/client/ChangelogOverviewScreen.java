@@ -3,8 +3,8 @@ package com.mmyddd.mcmod.changelog.client;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.network.chat.Component;
+
 import java.util.List;
 
 public class ChangelogOverviewScreen extends Screen {
@@ -29,15 +29,7 @@ public class ChangelogOverviewScreen extends Screen {
         this.listTop = 40;
         this.listBottom = this.height - 60;
 
-        this.changelogList = new ChangelogList(
-                this.minecraft,
-                this.width - 40,
-                this.height - 100,
-                this.listTop,
-                this.listBottom,
-                52
-        );
-        this.addRenderableWidget(changelogList);
+        refreshList();
 
         this.addRenderableWidget(
                 Button.builder(
@@ -48,18 +40,33 @@ public class ChangelogOverviewScreen extends Screen {
                         .build()
         );
 
-        // 添加刷新按钮（可选）
+        // 添加刷新按钮
         this.addRenderableWidget(
                 Button.builder(
                                 Component.literal("↻"),
                                 button -> {
                                     ChangelogEntry.loadAsync();
-                                    this.minecraft.setScreen(new ChangelogOverviewScreen(parentScreen));
+                                    refreshList();
                                 }
                         )
                         .bounds(this.width - 30, 10, 20, 20)
                         .build()
         );
+    }
+
+    private void refreshList() {
+        if (changelogList != null) {
+            this.removeWidget(changelogList);
+        }
+        this.changelogList = new ChangelogList(
+                this.minecraft,
+                this.width - 40,
+                this.height - 100,
+                this.listTop,
+                this.listBottom,
+                52
+        );
+        this.addRenderableWidget(changelogList);
     }
 
     @Override
