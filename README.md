@@ -33,9 +33,9 @@
 | `version` | String | 是 | 版本标识符 |
 | `date` | String | 否 | 发布日期（ISO 8601 格式） |
 | `title` | String | 否 | 版本标题/名称 |
-| `type` | String/Array | 否 | 更新类型枚举，影响左侧图标及默认标签；可选值：major/minor/patch/hotfix/danger，type自带颜色且无法修改|
+| `type` | String/Array | 否 | 更新类型枚举，影响左侧图标及默认标签；可选值：major/minor/patch/hotfix/danger，type自带颜色且无法修改 |
 | `tags` | String/Array | 否 | 自定义标签，与 tagColors 配合使用 |
 | `color` | String | 否 | 条目左侧边框颜色，支持 `0xAARRGGBB` 或 `#RRGGBB` 格式 |
-
 | `changes` | Array | 是 | 变更明细列表，每项为单条文本 |
+
 
