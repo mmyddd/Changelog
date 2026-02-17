@@ -13,7 +13,7 @@
 | `version` | String | Yes | Version identifier |
 | `date` | String | No | Release date (ISO 8601 format) |
 | `title` | String | No | Version title/name |
-| `type` | String/Array | No | Update type enumeration, affects left side icon and default tags; Available values: major/minor/patch/hotfix/danger |
+| `type` | String/Array | No | Update type enumeration, affects left side icon and default tags; Available values: major/minor/patch/hotfix/danger,The type comes with its own color and cannot be modified |
 | `tags` | String/Array | No | Custom tags, used in conjunction with tagColors |
 | `color` | String | No | Left border color of the entry, supports `0xAARRGGBB` or `#RRGGBB` format |
 | `changes` | Array | Yes | List of change details, each item is a single text entry |
@@ -38,3 +38,4 @@
 | `color` | String | 否 | 条目左侧边框颜色，支持 `0xAARRGGBB` 或 `#RRGGBB` 格式 |
 
 | `changes` | Array | 是 | 变更明细列表，每项为单条文本 |
+
