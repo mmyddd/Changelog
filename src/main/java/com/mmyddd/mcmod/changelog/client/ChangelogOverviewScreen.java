@@ -1,5 +1,6 @@
 package com.mmyddd.mcmod.changelog.client;
 
+import com.mmyddd.mcmod.changelog.Config;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -124,6 +125,28 @@ public class ChangelogOverviewScreen extends Screen {
                 0xAAAAAA
         );
 
+        if (Config.isEnableVersionCheck() && VersionCheckService.isCheckDone() && VersionCheckService.hasUpdate()) {
+            String currentVersion = Config.getModpackVersion();
+            String latestVersion = VersionCheckService.getLatestChangelogVersion();
+
+            String updateText = Component.translatable(
+                    "ctnhchangelog.update_available",
+                    currentVersion,
+                    latestVersion
+            ).getString();
+
+            int statsWidth = this.font.width(stats);
+            int x = 20 + statsWidth + 4;
+
+            graphics.drawString(
+                    this.font,
+                    updateText,
+                    x,
+                    25,
+                    0xFFFF55
+            );
+        }
+
         String footer = ChangelogEntry.getFooterText();
         if (footer != null && !footer.isEmpty()) {
             int footerY = this.height - 50;
@@ -182,5 +205,13 @@ public class ChangelogOverviewScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    public int getListLeft() {
+        return listLeft;
+    }
+
+    public int getListRight() {
+        return listRight;
     }
 }

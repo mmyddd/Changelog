@@ -1,5 +1,6 @@
 package com.mmyddd.mcmod.changelog.client;
 
+import com.mmyddd.mcmod.changelog.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,6 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
+
+    private static long lastBlinkTime = 0;
+    private static boolean blinkState = true;
+    private static final int BLINK_INTERVAL = 800;
 
     public ChangelogList(Minecraft minecraft, int width, int height, int y0, int y1, int itemHeight) {
         super(minecraft, width, height, y0, y1, itemHeight);
@@ -56,6 +61,17 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
         );
     }
 
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastBlinkTime > BLINK_INTERVAL) {
+            lastBlinkTime = currentTime;
+            blinkState = !blinkState;
+        }
+
+        super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
     public class Entry extends ObjectSelectionList.Entry<Entry> {
         private final ChangelogEntry changelogEntry;
         private long lastClickTime = 0;
@@ -94,8 +110,21 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
                 graphics.fill(left - 2, top - 2, left + width - 2, top + height + 2, 0x80000000);
             }
 
-            int borderColor = changelogEntry.getColor();
-            graphics.fill(left, top, left + 4, top + height, borderColor | 0xFF000000);
+            int borderColor = changelogEntry.getColor() | 0xFF000000;
+
+            graphics.fill(left, top, left + 4, top + height, borderColor);
+
+            boolean isLatest = (index == 0);
+
+            boolean isCurrentVersion = changelogEntry.getVersion().equals(Config.getModpackVersion());
+
+            if (Config.isEnableVersionCheck() && isLatest && VersionCheckService.hasUpdate() && blinkState) {
+                graphics.fill(left - 8, top, left - 4, top + height, 0xFFFFFF00);
+            }
+
+            if (isCurrentVersion) {
+                graphics.fill(left - 8, top, left - 4, top + height, 0xFF00FF00);
+            }
 
             int textLeft = left + 12;
             int line1Y = top + 4;
@@ -144,8 +173,7 @@ public class ChangelogList extends ObjectSelectionList<ChangelogList.Entry> {
 
                 if (changelogEntry.getChanges().size() > 1) {
                     String moreText = Component.translatable("ctnhchangelog.more_changes", changelogEntry.getChanges().size() - 1).getString();
-
-                    int moreTextX = left + width - hintTextWidth - 120; // 在查看提示左边120像素
+                    int moreTextX = left + width - hintTextWidth - 120;
                     graphics.drawString(font, moreText, moreTextX, line3Y, 0xFF888888);
                 }
             }

@@ -12,5 +12,6 @@
   "ctnhchangelog.changes": "Changes",
   "ctnhchangelog.more_changes": "and %s more changes...",
   "ctnhchangelog.stats": "Total %s versions",
-  "ctnhchangelog.loading": "Loading..."
+  "ctnhchangelog.loading": "Loading...",
+  "ctnhchangelog.update_available":  "Update found! Current version: %s, Latest version: %s"
 }

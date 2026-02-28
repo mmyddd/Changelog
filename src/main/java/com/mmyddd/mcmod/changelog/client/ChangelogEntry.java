@@ -46,6 +46,7 @@ public class ChangelogEntry {
     private static boolean isLoadingComplete = false;
 
     private static boolean configLoaded = false;
+    @Getter
     private static String pendingRemoteUrl = null;
     private static CompletableFuture<Void> loadFuture = null;
 
@@ -62,10 +63,6 @@ public class ChangelogEntry {
         this.types = types != null ? types : new ArrayList<>();
         this.color = color;
         this.tags = tags != null ? tags : new ArrayList<>();
-    }
-
-    public static String getPendingRemoteUrl() {
-        return pendingRemoteUrl;
     }
 
     public boolean hasTag(String tag) {
