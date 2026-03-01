@@ -3,27 +3,21 @@ package com.mmyddd.mcmod.changelog.mixin;
 import com.mmyddd.mcmod.changelog.Config;
 import com.mmyddd.mcmod.changelog.client.ChangelogEntry;
 import com.mmyddd.mcmod.changelog.client.ChangelogOverviewScreen;
-import com.mmyddd.mcmod.changelog.client.ChangelogDetailScreen;
 import com.mmyddd.mcmod.changelog.client.VersionCheckService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(SelectWorldScreen.class)
-public abstract class SelectWorldScreenMixin extends Screen {
-
-    @Shadow
-    private EditBox searchBox;
+@Mixin(TitleScreen.class)
+public abstract class TitleScreenMixin extends Screen {
 
     @Unique
     private Button ctnhChangelogButton;
@@ -43,7 +37,7 @@ public abstract class SelectWorldScreenMixin extends Screen {
     @Unique
     private static final int BORDER_COLOR = 0xFFFFFF00; // 黄色 (ARGB)
 
-    protected SelectWorldScreenMixin(Component title) {
+    protected TitleScreenMixin(Component title) {
         super(title);
     }
 
@@ -57,20 +51,23 @@ public abstract class SelectWorldScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        if (!Config.isChangelogTabEnabled() || searchBox == null) return;
-        if (!Config.showButtonOnSelectWorld()) return;
+        if (!Config.isChangelogTabEnabled() || Config.getModpackVersion().isEmpty()) return;
+        if (!Config.showButtonOnTitleScreen()) return;
+
+        int l = this.height / 4 + 48;
+        int buttonY = l + 72 + 12 + 24; // options按钮下方24像素
 
         ctnhChangelogButton = new ChangelogButton(
-                searchBox.getX() + searchBox.getWidth() + 4,
-                searchBox.getY(),
-                60,
-                searchBox.getHeight(),
+                this.width / 2 - 100,
+                buttonY,
+                200,
+                20,
                 Component.translatable("ctnhchangelog.button.changelog"),
                 button -> {
                     ChangelogEntry.resetLoaded();
                     ChangelogEntry.loadAfterConfig();
                     Minecraft.getInstance().setScreen(
-                            new ChangelogOverviewScreen((SelectWorldScreen) (Object) this)
+                            new ChangelogOverviewScreen((TitleScreen) (Object) this)
                     );
                 }
         );
