@@ -75,4 +75,5 @@ The configuration file is located at `config/ctnhchangelog-client.toml`.
 
 
 Example: [changelog.json](src/main/resources/changelog.json)
-A Useful Tool [changelog.html](deepseek_ctnhchangelog.html)
+A Useful Tool [CTNHChangelog](https://mmyddd.github.io/CTNHChangelog/)
+
