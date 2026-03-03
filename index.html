@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CTNH 更新日志配置工具</title>
-    <!-- SortableJS 轻量拖拽库 -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- 主要使用 Cloudflare CDN，备用使用 cdnjs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- 如果上面失败，下面这行会尝试加载（但浏览器通常会缓存，为防止阻塞可以加一个fallback检查） -->
+    <script>window.Sortable || document.write('<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"><\/script>');</script>
     <style>
         * {
             margin: 0;
@@ -382,13 +384,66 @@
             color: #ff5555;
         }
 
+        /* 类型复选框组 (椭圆样式) */
+        .type-checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 8px 0;
+        }
+
+        .type-checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .type-checkbox-item input[type="checkbox"] {
+            display: none;
+        }
+
+        .type-checkbox-item label {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            background: #2d3349;
+            color: #a0a0a0;
+        }
+
+        .type-checkbox-item input[type="checkbox"]:checked + label {
+            background: #ffaa00;
+            color: #1a1e2b;
+            border-color: #ffffff;
+            box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+        }
+
+        /* 每种类型的特殊颜色 (未选中时半透明，选中时纯色) */
+        .type-major label { background: #5555FF20; color: #aaaaff; }
+        .type-major input[type="checkbox"]:checked + label { background: #5555FF; color: white; }
+
+        .type-minor label { background: #55FF5520; color: #aaffaa; }
+        .type-minor input[type="checkbox"]:checked + label { background: #55FF55; color: #1a1e2b; }
+
+        .type-patch label { background: #FFFF5520; color: #ffffaa; }
+        .type-patch input[type="checkbox"]:checked + label { background: #FFFF55; color: #1a1e2b; }
+
+        .type-hotfix label { background: #FF555520; color: #ffaaaa; }
+        .type-hotfix input[type="checkbox"]:checked + label { background: #FF5555; color: white; }
+
+        .type-danger label { background: #FF555520; color: #ffaaaa; }
+        .type-danger input[type="checkbox"]:checked + label { background: #FF0000; color: white; }
+
         /* 标签容器 */
         .tags-container {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin: 12px 0;
-            min-height: 30px; /* 保证拖拽区域可见 */
+            min-height: 30px;
         }
 
         .tag {
@@ -507,13 +562,6 @@
             cursor: pointer;
         }
 
-        .footer-config {
-            margin-top: 24px;
-            background: #1a1e2b;
-            border-radius: 12px;
-            padding: 16px;
-        }
-
         .toast {
             position: fixed;
             top: 24px;
@@ -563,9 +611,7 @@
                 <span class="toc-toggle expanded" id="tocToggle">▼</span>
             </div>
             <div class="toc-content expanded" id="tocContent">
-                <div class="toc-grid" id="tocGrid">
-                    <!-- 动态生成 -->
-                </div>
+                <div class="toc-grid" id="tocGrid"></div>
             </div>
         </div>
 
@@ -652,8 +698,24 @@
         let currentData = JSON.parse(JSON.stringify(defaultData));
         let currentTab = 'entries';
         let isTocExpanded = true;
-        // 存储所有 Sortable 实例，便于销毁
         let sortableInstances = [];
+
+        // 等待 Sortable 加载完成（最多尝试 20 次，间隔 100ms）
+        function waitForSortable(callback, maxAttempts = 20) {
+            let attempts = 0;
+            function check() {
+                if (typeof Sortable !== 'undefined') {
+                    callback();
+                } else if (attempts < maxAttempts) {
+                    attempts++;
+                    setTimeout(check, 100);
+                } else {
+                    console.error('Sortable library failed to load. Drag and drop will not work.');
+                    showToast('拖拽库加载失败，请刷新页面重试', 'error');
+                }
+            }
+            check();
+        }
 
         function init() {
             renderEntries();
@@ -712,26 +774,26 @@
             }
         }
 
-        // 初始化所有可拖拽容器 (标签和变更)
         function initDragSort() {
-            // 销毁之前的 Sortable 实例
+            // 确保 Sortable 可用
+            if (typeof Sortable === 'undefined') {
+                console.warn('Sortable not available, skipping drag init');
+                return;
+            }
+            // 销毁旧实例
             sortableInstances.forEach(instance => instance.destroy());
             sortableInstances = [];
 
-            // 为每个条目的标签容器和变更容器创建 Sortable
             document.querySelectorAll('[id^="tags-"]').forEach(container => {
-                if (container.children.length === 0) return; // 空容器跳过
+                if (container.children.length === 0) return;
                 const sortable = new Sortable(container, {
                     handle: '.drag-handle',
                     animation: 150,
                     onEnd: function(evt) {
-                        // 获取条目索引
-                        const id = evt.target.id; // 例如 "tags-0"
+                        const id = evt.target.id;
                         const index = parseInt(id.split('-')[1]);
-                        // 重建 tags 数组
                         const newTags = [];
-                        const tagElements = container.querySelectorAll('.tag');
-                        tagElements.forEach(tagEl => {
+                        container.querySelectorAll('.tag').forEach(tagEl => {
                             const nameSpan = tagEl.querySelector('.tag-name');
                             if (nameSpan) newTags.push(nameSpan.textContent);
                         });
@@ -748,12 +810,10 @@
                     handle: '.drag-handle',
                     animation: 150,
                     onEnd: function(evt) {
-                        const id = evt.target.id; // 例如 "changes-0"
+                        const id = evt.target.id;
                         const index = parseInt(id.split('-')[1]);
-                        // 重建 changes 数组
                         const newChanges = [];
-                        const changeItems = container.querySelectorAll('.change-item');
-                        changeItems.forEach(item => {
+                        container.querySelectorAll('.change-item').forEach(item => {
                             const input = item.querySelector('input');
                             if (input) newChanges.push(input.value);
                         });
@@ -852,8 +912,8 @@
                 `;
                 container.appendChild(entryDiv);
             });
-            // 渲染完成后初始化拖拽排序
-            initDragSort();
+            // 等待 Sortable 可用后初始化拖拽
+            waitForSortable(initDragSort);
             renderToc();
         }
 
@@ -941,7 +1001,6 @@
             const input = document.getElementById(`newTag-${entryIndex}`);
             const newTag = input.value.trim();
             if (newTag) {
-                // 直接推入，允许重复
                 currentData.entries[entryIndex].tags.push(newTag);
                 renderEntries();
                 updatePreview();
@@ -984,7 +1043,7 @@
                 currentData.tagColors[newTag.trim()] = currentData.tagColors[oldTag];
                 delete currentData.tagColors[oldTag];
                 renderTagColors();
-                renderEntries(); // 重新渲染条目以更新标签显示
+                renderEntries();
                 updatePreview();
             }
         }
@@ -1089,6 +1148,7 @@
             }, 3000);
         }
 
+        // 启动初始化
         init();
     </script>
 </body>
