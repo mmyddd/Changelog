@@ -633,7 +633,7 @@
                     <div class="form-section">
                         <h2>🏷️ 标签颜色配置</h2>
                         <div class="form-group">
-                            <label>标签颜色映射</label>
+                            <label>标签颜色映射 (格式: 0xFFRRGGBB)</label>
                             <div id="tagColorsContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
                             <button class="btn" onclick="addTagColor()" style="margin-top: 16px;">➕ 添加标签</button>
                         </div>
@@ -660,8 +660,8 @@
     <script>
         const TYPE_OPTIONS = ['major', 'minor', 'patch', 'hotfix', 'danger'];
         const TYPE_DISPLAY_NAMES = {
-            'major': '大更新',
-            'minor': '小更新',
+            'major': '重大更新',
+            'minor': '功能更新',
             'patch': '修复补丁',
             'hotfix': '热修复',
             'danger': '危险更新'
@@ -690,7 +690,7 @@
                 }
             ],
             tagColors: {
-                "Example": "#5555FF"
+                "Example": "0xFF5555FF" // 修改为 0x 格式 (蓝色)
             }
         };
 
@@ -833,14 +833,12 @@
                 entryDiv.id = `entry-${index}`;
                 // 生成标签HTML，每个标签使用对应颜色背景
                 const tagsHtml = entry.tags.map(tag => {
-                    // 获取标签颜色，如果未定义则使用默认灰色 #888888
-                    let tagColor = currentData.tagColors[tag] || '#888888';
-                    // 确保格式为 #RRGGBB (如果是以0x开头的ARGB则转换)
-                    if (tagColor.startsWith('0x')) {
-                        tagColor = '#' + tagColor.substring(4);
-                    }
+                    // 获取标签颜色，如果未定义则使用默认灰色 0xFF888888
+                    let tagColor = currentData.tagColors[tag] || '0xFF888888';
+                    // 转换为 #RRGGBB 用于 CSS 背景
+                    const bgColor = hexToRgba(tagColor); // 该函数已支持 0x 转 #
                     return `
-                        <span class="tag" style="background: ${tagColor}">
+                        <span class="tag" style="background: ${bgColor}">
                             <span class="drag-handle">☰</span>
                             <span class="tag-name">${tag}</span>
                             <button class="remove-tag" onclick="removeTagFromEntry(${index}, '${tag}')">✕</button>
@@ -931,6 +929,14 @@
             const container = document.getElementById('tagColorsContainer');
             container.innerHTML = '';
             Object.entries(currentData.tagColors).forEach(([tag, color]) => {
+                // 确保 color 是 0x 格式（如果是 # 开头则转换）
+                let displayColor = color;
+                if (color.startsWith('#')) {
+                    // 将 #RRGGBB 转为 0xFFRRGGBB
+                    displayColor = '0xFF' + color.substring(1);
+                }
+                // 对于显示，我们希望文本框显示 0x 格式，颜色选择器使用 # 格式
+                const hexColor = argbToHex(displayColor); // 转为 #RRGGBB 供颜色选择器使用
                 const row = document.createElement('div');
                 row.style.display = 'flex';
                 row.style.gap = '8px';
@@ -938,8 +944,8 @@
                 row.innerHTML = `
                     <input type="text" class="form-control" value="${tag}" placeholder="标签名" style="flex: 2;" onchange="updateTagName('${tag}', this.value)">
                     <div class="color-input-group" style="flex: 2;">
-                        <input type="color" value="${argbToHex(color)}" onchange="updateTagColor('${tag}', this.value, true)">
-                        <input type="text" class="form-control" value="${color}" onchange="updateTagColor('${tag}', this.value, false)">
+                        <input type="color" value="${hexColor}" onchange="updateTagColor('${tag}', this.value, true)">
+                        <input type="text" class="form-control" value="${displayColor}" onchange="updateTagColor('${tag}', this.value, false)">
                     </div>
                     <button class="entry-action-btn delete" onclick="deleteTagColor('${tag}')">🗑️</button>
                 `;
@@ -1001,6 +1007,7 @@
         }
 
         function updateEntryColor(index, hexColor) {
+            // hexColor 是 #RRGGBB 格式，转换为 0xFFRRGGBB
             const rgb = hexColor.replace('#', '');
             currentData.entries[index].color = `0xFF${rgb}`;
             renderEntries();
@@ -1043,7 +1050,7 @@
 
         function addTagColor() {
             const newTag = `新标签${Object.keys(currentData.tagColors).length + 1}`;
-            currentData.tagColors[newTag] = "#888888";
+            currentData.tagColors[newTag] = "0xFF888888"; // 默认灰色
             renderTagColors();
             updatePreview();
         }
@@ -1059,7 +1066,24 @@
         }
 
         function updateTagColor(tag, color, isHexInput) {
-            currentData.tagColors[tag] = isHexInput ? color : color;
+            // isHexInput true 表示来自颜色选择器，传入的是 #RRGGBB
+            // false 表示来自文本框，传入的可能已经是 0x 格式，也可能是 # 格式
+            let newColor;
+            if (isHexInput) {
+                // #RRGGBB -> 0xFFRRGGBB
+                newColor = '0xFF' + color.substring(1);
+            } else {
+                // 文本框输入，可能是 0x 或 # 格式，统一转为 0x
+                if (color.startsWith('#')) {
+                    newColor = '0xFF' + color.substring(1);
+                } else if (color.startsWith('0x')) {
+                    newColor = color; // 保持原样
+                } else {
+                    // 未知格式，尝试作为数字？直接保存但可能无效，我们默认加上 0xFF
+                    newColor = '0xFF' + color.replace(/^#/, '');
+                }
+            }
+            currentData.tagColors[tag] = newColor;
             renderTagColors();
             renderEntries();
             updatePreview();
@@ -1080,15 +1104,26 @@
             updatePreview();
         });
 
+        // 辅助函数：将 0xFFRRGGBB 或 #RRGGBB 转换为 #RRGGBB 供颜色选择器使用
         function argbToHex(argb) {
-            if (argb && argb.startsWith('0x')) return `#${argb.substring(4)}`;
-            if (argb && argb.startsWith('#')) return argb;
-            return '#FFFF00';
+            if (argb && argb.startsWith('0x')) {
+                // 0xFFRRGGBB -> #RRGGBB
+                return '#' + argb.substring(4);
+            }
+            if (argb && argb.startsWith('#')) {
+                return argb; // 已经是 # 格式
+            }
+            return '#FFFF00'; // 默认
         }
 
+        // 辅助函数：将 0x 或 # 格式转为 #RRGGBB 用于 CSS 背景
         function hexToRgba(hex) {
-            if (hex && hex.startsWith('0x')) return `#${hex.substring(4)}`;
-            if (hex && hex.startsWith('#')) return hex;
+            if (hex && hex.startsWith('0x')) {
+                return '#' + hex.substring(4);
+            }
+            if (hex && hex.startsWith('#')) {
+                return hex;
+            }
             return '#888888';
         }
 
@@ -1119,7 +1154,15 @@
                         const imported = JSON.parse(e.target.result);
                         if (imported.footer !== undefined && imported.entries) {
                             currentData = imported;
+                            // 确保 tagColors 存在，并统一格式为 0x
                             if (!currentData.tagColors) currentData.tagColors = {};
+                            // 将可能存在的 # 格式转换为 0x 格式
+                            Object.keys(currentData.tagColors).forEach(tag => {
+                                const col = currentData.tagColors[tag];
+                                if (typeof col === 'string' && col.startsWith('#')) {
+                                    currentData.tagColors[tag] = '0xFF' + col.substring(1);
+                                }
+                            });
                             renderEntries();
                             renderTagColors();
                             renderToc();
