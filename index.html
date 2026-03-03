@@ -447,21 +447,20 @@
         }
 
         .tag {
-            background: #2d3349;
-            color: #e0e0e0;
+            color: #ffffff; /* 白色文字保证可读性 */
             padding: 4px 10px 4px 6px;
             border-radius: 16px;
             font-size: 12px;
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            border: 1px solid #404760;
+            border: 1px solid rgba(0,0,0,0.2);
             user-select: none;
         }
 
         .drag-handle {
             cursor: grab;
-            opacity: 0.5;
+            opacity: 0.7;
             font-size: 14px;
             margin-right: 2px;
             user-select: none;
@@ -478,13 +477,13 @@
         .remove-tag {
             background: none;
             border: none;
-            color: #a0a0a0;
+            color: rgba(255,255,255,0.7);
             cursor: pointer;
             font-size: 12px;
             padding: 0 2px;
         }
         .remove-tag:hover {
-            color: #ff5555;
+            color: #ffffff;
         }
 
         /* 变更列表 */
@@ -832,6 +831,23 @@
                 const entryDiv = document.createElement('div');
                 entryDiv.className = 'entry-card';
                 entryDiv.id = `entry-${index}`;
+                // 生成标签HTML，每个标签使用对应颜色背景
+                const tagsHtml = entry.tags.map(tag => {
+                    // 获取标签颜色，如果未定义则使用默认灰色 #888888
+                    let tagColor = currentData.tagColors[tag] || '#888888';
+                    // 确保格式为 #RRGGBB (如果是以0x开头的ARGB则转换)
+                    if (tagColor.startsWith('0x')) {
+                        tagColor = '#' + tagColor.substring(4);
+                    }
+                    return `
+                        <span class="tag" style="background: ${tagColor}">
+                            <span class="drag-handle">☰</span>
+                            <span class="tag-name">${tag}</span>
+                            <button class="remove-tag" onclick="removeTagFromEntry(${index}, '${tag}')">✕</button>
+                        </span>
+                    `;
+                }).join('');
+
                 entryDiv.innerHTML = `
                     <div class="entry-card-header">
                         <h3>
@@ -883,13 +899,7 @@
                     <div class="form-group">
                         <label>标签</label>
                         <div class="tags-container" id="tags-${index}">
-                            ${entry.tags.map(tag => `
-                                <span class="tag">
-                                    <span class="drag-handle">☰</span>
-                                    <span class="tag-name">${tag}</span>
-                                    <button class="remove-tag" onclick="removeTagFromEntry(${index}, '${tag}')">✕</button>
-                                </span>
-                            `).join('')}
+                            ${tagsHtml}
                         </div>
                         <div style="display: flex; gap: 8px; margin-top: 8px;">
                             <input type="text" class="form-control" id="newTag-${index}" placeholder="新标签" style="width: 200px;">
